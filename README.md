@@ -2,7 +2,6 @@
 just another boring php library
 
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php)](https://php.net)
-[![CI](https://github.com/YOUR_USER/acme-security-kit/actions/workflows/ci.yml/badge.svg)](...)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PHPStan](https://img.shields.io/badge/PHPStan-level%208-brightgreen.svg)](https://phpstan.org)
 [![Packagist](https://img.shields.io/packagist/v/acme/security-kit.svg)](https://packagist.org/packages/acme/security-kit)
