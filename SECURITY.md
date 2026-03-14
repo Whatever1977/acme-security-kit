@@ -15,7 +15,7 @@ Security fixes are backported to the latest patch release of the current stable 
 
 **Please do not report security vulnerabilities through public GitHub issues, pull requests, or discussions.**
 
-If you believe you have found a security vulnerability in `acme/security-kit`, please disclose it responsibly using one of the methods below.
+If you believe you have found a security vulnerability in `acme-security-kit`, please disclose it responsibly using one of the methods below.
 
 Send a email to **pkotsorgios654@gmail.com**. Include the following in your report:
 
