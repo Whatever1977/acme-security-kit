@@ -1,0 +1,57 @@
+@startuml sequence-rbac-flow
+
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+skinparam sequenceMessageAlign center
+
+title RBAC Authorization — can() Decision Sequence
+
+participant "Controller" as Ctrl
+participant "RbacAuthorizer" as Authz
+participant "AttributeCheck\n(ABAC-lite)" as ABAC
+participant "AssignmentRepository" as AR
+participant "RoleRepository" as RR
+participant "Auditor" as Aud
+
+Ctrl -> Authz : can("user-42", "edit", "posts", { ip: "..." })
+
+== Pass 1: Attribute Checks (ABAC-lite) ==
+
+loop for each attributeCheck
+  Authz -> ABAC : check(subjectId, action, resource, context)
+  alt returns true
+    ABAC --> Authz : true
+    Authz --> Ctrl : Decision::allow("Attribute check granted")
+  else returns false
+    ABAC --> Authz : false
+    Authz -> Aud : record(authz.denied, warning)
+    Authz --> Ctrl : Decision::deny("Attribute check denied")
+  else returns null
+    ABAC --> Authz : null (abstain)
+  end
+end
+
+== Pass 2: RBAC ==
+
+Authz -> AR : getRolesForSubject("user-42") → ["editor"]
+loop for each assigned role
+  Authz -> RR : findByName("editor") → Role
+  Authz -> Authz : check "edit:posts" in role.permissions
+
+  alt direct permission match
+    Authz --> Ctrl : Decision::allow("Granted via role: editor")
+  else wildcard "*" match
+    Authz --> Ctrl : Decision::allow("Granted via role: admin")
+  else check parent roles (inheritance)
+    Authz -> RR : findByName(parentRole)
+    note right: recursive, guards\nagainst circular refs
+  end
+end
+
+== No Matching Role ==
+
+Authz -> Aud : record(authz.denied, warning)
+Authz --> Ctrl : Decision::deny("Subject lacks permission")
+
+@enduml

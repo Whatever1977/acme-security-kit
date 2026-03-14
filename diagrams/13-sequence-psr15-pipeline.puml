@@ -1,0 +1,42 @@
+@startuml sequence-psr15-middleware-pipeline
+
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+
+title PSR-15 Middleware Pipeline
+
+participant "HTTP Client" as C
+participant "CsrfMiddleware" as CM
+participant "SignedUrlMiddleware" as SUM
+participant "Your Handler" as H
+participant "HmacCsrfManager" as CSRF
+participant "HmacUrlSigner" as URL
+participant "Auditor" as AUD
+
+C -> CM : ServerRequest
+
+group CSRF check (skip GET/HEAD/OPTIONS)
+  CM -> CSRF : validate(sessionId, context, token)
+  alt invalid
+    CM -> AUD : record("csrf.invalid", warning)
+    CM --> C : 419 Response
+  end
+end
+
+CM -> SUM : ServerRequest (pass through)
+
+group Signed URL check (if route requires it)
+  SUM -> URL : verify(requestUri)
+  alt invalid / expired
+    SUM -> AUD : record("urlsig.invalid", warning)
+    SUM --> C : 403 Response
+  end
+end
+
+SUM -> H : ServerRequest
+H --> SUM : Response
+SUM --> CM : Response
+CM --> C : Response
+
+@enduml

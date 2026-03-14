@@ -1,0 +1,60 @@
+@startuml class-diagram-crypto
+
+skinparam backgroundColor #FAFAFA
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+
+title acme/security-kit — Crypto Module Class Diagram
+
+namespace Acme.SecurityKit.Crypto {
+
+  interface ConstantTime {
+    + equals(a: string, b: string): bool
+  }
+
+  interface KeyProvider {
+    + current(): KeySet
+    + byKid(kid: string): ?Key
+  }
+
+  class HashEquals implements ConstantTime {
+    + equals(a: string, b: string): bool
+  }
+
+  class SecureRandom {
+    + bytes(length: int): string
+    + base64Url(length: int): string
+  }
+
+  class Key {
+    + kid: string
+    + algorithm: string
+    + material: string
+    + isSymmetric: bool
+    + notAfter: ?DateTimeImmutable
+    ---
+    + isExpired(at: ?DateTimeImmutable): bool
+  }
+
+  class KeySet {
+    - keys: Key[]
+    ---
+    + get(kid: string): ?Key
+    + all(): Key[]
+    + toJwks(): array
+  }
+
+  class InMemoryKeyProvider implements KeyProvider {
+    - keySet: KeySet
+    ---
+    + __construct(keys: Key...)
+    + current(): KeySet
+    + byKid(kid: string): ?Key
+  }
+
+  KeySet "1" o-- "1..*" Key : contains
+  InMemoryKeyProvider "1" *-- "1" KeySet : owns
+}
+
+@enduml

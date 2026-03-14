@@ -1,0 +1,41 @@
+@startuml state-key-rotation
+
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+
+title Key Lifecycle & Rotation State Diagram
+
+[*] --> Active : Key created\n(InMemoryKeyProvider)
+
+Active : kid = "key-v1"
+Active : Used for signing new tokens
+
+Active --> Retired : New key "key-v2"\npromoted to current
+
+Retired : kid = "key-v1"
+Retired : No longer signs new tokens
+Retired : Still verifies old tokens via byKid()
+
+Retired --> Revoked : notAfter reached\nor security incident
+
+Revoked : byKid() returns null
+Revoked : All tokens signed with\nthis key rejected
+
+Revoked --> [*]
+
+note right of Active
+  "Current" key = first key
+  in InMemoryKeyProvider.
+  KeySet.toJwks() exports
+  all active public keys.
+end note
+
+note right of Retired
+  Key rotation: add new key
+  as first parameter, keep old
+  as second — old URLs / JWTs
+  still verify.
+end note
+
+@enduml

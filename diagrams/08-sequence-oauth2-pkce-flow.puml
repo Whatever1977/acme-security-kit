@@ -1,0 +1,58 @@
+@startuml sequence-oauth2-pkce-flow
+
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+skinparam sequenceMessageAlign center
+
+title OAuth2 PKCE Authorization Code Flow
+
+actor User
+participant "SPA / Mobile\n(Public Client)" as Client
+participant "Auth Server\n(PHP)" as Auth
+participant "PkceValidator" as PKCE
+participant "TokenRepository" as TR
+
+== Authorization Request ==
+
+User -> Client : click "Login"
+Client -> Client : generate code_verifier (32 random bytes)\ncompute code_challenge = BASE64URL(SHA256(verifier))
+Client -> Auth : GET /authorize\n  ?client_id=my-spa\n  &code_challenge=<hash>\n  &code_challenge_method=S256\n  &redirect_uri=https://app/callback
+Auth -> Auth : store (code_challenge, S256) with auth code
+
+== Token Exchange ==
+
+Client -> Auth : POST /token\n  { code, code_verifier, client_id }
+Auth -> PKCE : validate(code_verifier, stored_challenge, "S256")
+PKCE -> PKCE : SHA256(code_verifier) == stored_challenge ?
+PKCE --> Auth : true / false
+
+alt PKCE valid
+  Auth -> TR : create AccessToken + RefreshToken
+  Auth --> Client : { access_token, refresh_token, expires_in }
+else PKCE invalid
+  Auth --> Client : 400 invalid_grant
+end
+
+== Refresh Token Rotation ==
+
+Client -> Auth : POST /token { grant_type: refresh_token, refresh_token: "..." }
+Auth -> TR : findRefreshToken(token)
+
+alt token not revoked
+  Auth -> TR : revokeRefreshToken(old)
+  Auth -> TR : create new AccessToken + RefreshToken
+  Auth --> Client : { new access_token, new refresh_token }
+else token already revoked (reuse detected!)
+  Auth -> TR : revoke entire token family
+  Auth --> Client : 401 invalid_grant
+  note right: Suspicious!\nRefresh token reuse\ndetected → revoke all
+end
+
+note over PKCE
+  Only S256 is accepted.
+  "plain" method is rejected
+  unconditionally.
+end note
+
+@enduml

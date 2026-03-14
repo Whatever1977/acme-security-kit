@@ -1,0 +1,49 @@
+@startuml sequence-totp-flow
+
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+skinparam sequenceMessageAlign center
+
+title TOTP — Enrolment & Verification Sequence
+
+actor User
+participant "App Controller" as App
+participant "RfcTotp" as TOTP
+participant "SecureRandom" as RNG
+participant "Authenticator App\n(Google Auth / Authy)" as Auth
+database "User DB" as DB
+
+== Enrolment ==
+
+User -> App : enable 2FA
+App -> TOTP : generateSecret()
+TOTP -> RNG : bytes(20) → Base32 encode
+TOTP --> App : secret = "JBSWY3DPEHPK3PXP..."
+App -> DB : store encrypted secret for user
+App -> TOTP : provisioningUri("alice@example.com", "MyApp", secret)
+TOTP --> App : "otpauth://totp/MyApp:alice%40..."
+App -> User : display QR code
+User -> Auth : scan QR code
+
+== Verification on Login ==
+
+User -> App : POST /login { email, password, totp_code: "123456" }
+App -> DB : load user + encrypted TOTP secret
+App -> TOTP : verify(secret, "123456")
+TOTP -> TOTP : compute HMAC-SHA1(secret, floor(time/30))\ncheck ±1 window for clock drift
+alt code valid
+  TOTP --> App : true
+  App -> User : login success, set session
+else code invalid
+  TOTP --> App : false
+  App -> User : 401 Invalid authenticator code
+end
+
+note over TOTP
+  Constant-time comparison
+  prevents timing attacks.
+  ±1 window = current ±30s.
+end note
+
+@enduml

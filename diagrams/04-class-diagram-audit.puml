@@ -1,0 +1,57 @@
+@startuml class-diagram-audit
+
+skinparam backgroundColor #FAFAFA
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+
+title acme/security-kit — Audit Module Class Diagram
+
+namespace Acme.SecurityKit.Audit {
+
+  interface Auditor {
+    + record(event: SecurityEvent): void
+  }
+
+  class SecurityEvent {
+    + type: string
+    + at: DateTimeImmutable
+    + context: array
+    + severity: string
+    ---
+    ' severity: info | warning | error | critical
+  }
+
+  class PsrLoggerAuditor implements Auditor {
+    - logger: LoggerInterface
+    - channel: string
+    ---
+    + __construct(logger, channel)
+    + record(event: SecurityEvent): void
+  }
+
+  class NullAuditor implements Auditor {
+    + record(event: SecurityEvent): void
+  }
+
+  PsrLoggerAuditor --> SecurityEvent
+  NullAuditor --> SecurityEvent
+
+  PsrLoggerAuditor ..> "PSR-3 LoggerInterface"
+}
+
+note right of Acme.SecurityKit.Audit.PsrLoggerAuditor
+  Maps severity to PSR-3 log levels:
+  critical → CRITICAL
+  error    → ERROR
+  warning  → WARNING
+  info     → INFO
+end note
+
+note right of Acme.SecurityKit.Audit.NullAuditor
+  No-op implementation.
+  Discard all events.
+  Use in unit tests.
+end note
+
+@enduml

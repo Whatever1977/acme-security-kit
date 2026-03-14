@@ -1,0 +1,44 @@
+@startuml sequence-csrf-flow
+
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+skinparam sequenceMessageAlign center
+
+title CSRF Protection — Token Issue & Validate Sequence
+
+actor Browser
+participant "Controller\n(PHP)" as Ctrl
+participant "HmacCsrfManager" as CSRF
+participant "SecureRandom" as RNG
+participant "HashEquals" as HE
+database "Session" as Sess
+
+== Issue Token (GET /form) ==
+
+Browser -> Ctrl : GET /form
+Ctrl -> Sess : get sessionId
+Ctrl -> CSRF : issue(sessionId, "transfer_funds")
+CSRF -> RNG : base64Url(16) → nonce
+CSRF -> CSRF : HMAC-SHA256(secret, sessionId|context|nonce|issuedAt)
+CSRF --> Ctrl : CsrfToken { value, expiresAt }
+Ctrl -> Browser : render <form>\n  <input name="_csrf_token" value="...">
+
+== Validate Token (POST /form) ==
+
+Browser -> Ctrl : POST /form { _csrf_token: "..." }
+Ctrl -> Sess : get sessionId
+Ctrl -> CSRF : validate(sessionId, "transfer_funds", submittedToken)
+CSRF -> CSRF : recompute HMAC from token payload
+CSRF -> HE : equals(expected, submitted)
+HE --> CSRF : bool
+
+alt Token valid
+  CSRF --> Ctrl : true
+  Ctrl -> Browser : 200 OK — form processed
+else Token invalid / expired
+  CSRF --> Ctrl : false
+  Ctrl -> Browser : 419 Token Mismatch
+end
+
+@enduml

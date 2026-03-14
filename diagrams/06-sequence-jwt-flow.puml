@@ -1,0 +1,46 @@
+@startuml sequence-jwt-flow
+
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+skinparam sequenceMessageAlign center
+
+title JWT — Mint & Validate Sequence
+
+actor Client
+participant "Auth Server\n(PHP)" as Auth
+participant "FirebaseJwtManager" as JWTMgr
+participant "KeyProvider" as KP
+participant "firebase/php-jwt" as FW
+participant "Resource Server\n(PHP)" as Res
+
+== Token Issuance ==
+
+Client -> Auth : POST /token { credentials }
+Auth -> Auth : authenticate user
+Auth -> JWTMgr : mint(claims, expiresAt)
+JWTMgr -> KP : current() → KeySet (first key = signing key)
+JWTMgr -> FWS : JWT::encode(payload, key, algorithm)
+FW --> JWTMgr : compact JWT string
+JWTMgr --> Auth : "eyJhbGci..."
+Auth --> Client : { access_token: "eyJ..." }
+
+== Token Validation ==
+
+Client -> Res : GET /api/resource\n  Authorization: Bearer eyJ...
+Res -> JWTMgr : parseAndValidate(jwt)
+JWTMgr -> JWTMgr : peek kid from header
+JWTMgr -> KP : byKid(kid) → Key
+JWTMgr -> FW : JWT::decode(token, keys)
+FW --> JWTMgr : decoded payload
+JWTMgr -> JWTMgr : validate iss, aud, exp, jti
+JWTMgr --> Res : VerifiedToken { claims, kid, expiresAt }
+Res --> Client : 200 OK { data }
+
+note over JWTMgr
+  Algorithm is set from JwtConfig (server-side).
+  It is NEVER read from the JWT header.
+  This prevents algorithm confusion attacks.
+end note
+
+@enduml

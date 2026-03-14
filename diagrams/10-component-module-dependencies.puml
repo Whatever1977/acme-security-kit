@@ -1,0 +1,53 @@
+@startuml component-module-dependencies
+
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+skinparam componentStyle rectangle
+
+
+title acme/security-kit — Module Dependency Map
+
+component "Crypto\n(SecureRandom, Key, KeySet,\nHashEquals, KeyProvider)" as CRYPTO #E3F2FD
+
+component "Audit\n(Auditor, SecurityEvent,\nPsrLoggerAuditor, NullAuditor)" as AUDIT #F9FBE7
+
+component "CSRF\n(HmacCsrfManager, CsrfPolicy)" as CSRF #FFF3E0
+component "UrlSigner\n(HmacUrlSigner, UrlSignerPolicy)" as URL #FFF3E0
+component "JWT\n(FirebaseJwtManager, JwtConfig,\nJwtException)" as JWT #FFF3E0
+component "Password\n(Argon2idHasher, PasswordPolicy,\nPolicyAwareHasher)" as PWD #F3E5F5
+component "TOTP\n(RfcTotp, TotpConfig)" as TOTP #FFF3E0
+component "OAuth2\n(PkceValidator, TokenTtlPolicy,\nClient, Repositories)" as OAUTH #E8F5E9
+component "Authz\n(RbacAuthorizer, Role,\nInMemoryRepositories)" as AUTHZ #FCE4EC
+
+component "Support (PSR-15)\n(CsrfMiddleware,\nSignedUrlMiddleware)" as MW #ECEFF1
+
+' All authentication/authz modules depend on Crypto
+CSRF  --> CRYPTO
+URL   --> CRYPTO
+JWT   --> CRYPTO
+TOTP  --> CRYPTO
+OAUTH --> CRYPTO
+AUTHZ --> AUDIT
+
+' Middleware wires together modules
+MW --> CSRF
+MW --> URL
+MW --> AUDIT
+
+' JWT and Authz emit audit events
+JWT  ..> AUDIT : records events
+RBAC ..> AUDIT : records events (optional)
+
+' External deps
+component "firebase/php-jwt" as FW #EEEEEE
+component "psr/log" as PSR3 #EEEEEE
+component "psr/http-message" as PSR7 #EEEEEE
+component "psr/http-server-middleware" as PSR15 #EEEEEE
+
+JWT   --> FW
+AUDIT --> PSR3
+MW    --> PSR7
+MW    --> PSR15
+
+@enduml

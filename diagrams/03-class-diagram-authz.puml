@@ -1,0 +1,76 @@
+@startuml class-diagram-authz
+
+skinparam backgroundColor #FAFAFA
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+
+title acme/security-kit — Authz Module Class Diagram
+
+namespace Acme.SecurityKit.Authz {
+
+  interface Authorizer {
+    + can(subjectId, action, resource, context): Decision
+  }
+
+  interface RoleRepository {
+    + findByName(name: string): ?Role
+  }
+
+  interface AssignmentRepository {
+    + getRolesForSubject(subjectId: string): string[]
+  }
+
+  class Decision {
+    + allowed: bool
+    + reason: string
+    ---
+    {static} + allow(reason): Decision
+    {static} + deny(reason): Decision
+  }
+
+  class Role {
+    + name: string
+    + parents: string[]
+    + permissions: string[]
+  }
+
+  class InMemoryRoleRepository implements RoleRepository {
+    - roles: Role[]
+    ---
+    + add(role: Role): void
+    + findByName(name: string): ?Role
+  }
+
+  class InMemoryAssignmentRepository implements AssignmentRepository {
+    - assignments: array
+    ---
+    + assign(subjectId, roles): void
+    + getRolesForSubject(subjectId): string[]
+  }
+
+  class RbacAuthorizer implements Authorizer {
+    - roleRepository: RoleRepository
+    - assignmentRepository: AssignmentRepository
+    - auditor: ?Auditor
+    - attributeChecks: callable[]
+    ---
+    + can(subjectId, action, resource, context): Decision
+    - roleHasPermission(roleName, permission, visited): bool
+    - audit(subjectId, action, resource, reason): void
+  }
+
+  RbacAuthorizer --> RoleRepository
+  RbacAuthorizer --> AssignmentRepository
+  RbacAuthorizer --> Decision
+  RbacAuthorizer ..> "Acme.SecurityKit.Audit.Auditor"
+  InMemoryRoleRepository "1" o-- "*" Role
+}
+
+note bottom of Acme.SecurityKit.Authz.RbacAuthorizer
+  ABAC-lite: attributeChecks callables
+  return true (allow), false (deny),
+  or null (abstain, let RBAC decide)
+end note
+
+@enduml

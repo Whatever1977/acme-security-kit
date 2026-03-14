@@ -1,0 +1,101 @@
+@startuml architecture-overview
+
+skinparam backgroundColor #FAFAFA
+skinparam componentStyle rectangle
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 13
+
+title acme/security-kit — Architecture Overview
+
+package "acme/security-kit" {
+
+  package "Crypto (Foundation)" #E8F4FD {
+    [SecureRandom] as SR
+    [HashEquals\n(ConstantTime)] as HE
+    [Key / KeySet] as KS
+    [KeyProvider\n«interface»] as KP
+    [InMemoryKeyProvider] as IMKP
+  }
+
+  package "Authentication" #FFF3E0 {
+    [HmacCsrfManager] as CSRF
+    [HmacUrlSigner] as URL
+    [FirebaseJwtManager] as JWT
+    [RfcTotp] as TOTP
+  }
+
+  package "Password" #F3E5F5 {
+    [Argon2idHasher] as A2
+    [PolicyAwareHasher] as PAH
+    [PasswordPolicy] as PP
+  }
+
+  package "OAuth2" #E8F5E9 {
+    [PkceValidator] as PKCE
+    [TokenTtlPolicy] as TTP
+    [ClientRepository\n«interface»] as CR
+    [TokenRepository\n«interface»] as TR
+  }
+
+  package "Authz" #FCE4EC {
+    [RbacAuthorizer] as RBAC
+    [Role] as ROLE
+    [InMemoryRoleRepository] as IRR
+    [InMemoryAssignmentRepository] as IAR
+  }
+
+  package "Audit" #F9FBE7 {
+    [Auditor\n«interface»] as AUD
+    [PsrLoggerAuditor] as PSR
+    [NullAuditor] as NULL
+  }
+
+  package "Support (PSR-15)" #ECEFF1 {
+    [CsrfMiddleware] as CM
+    [SignedUrlMiddleware] as SUM
+  }
+}
+
+' Crypto dependencies
+IMKP ..|> KP
+SR --> KS
+KP --> KS
+
+' Auth modules depend on Crypto
+CSRF --> SR
+CSRF --> HE
+CSRF --> KP
+URL  --> HE
+URL  --> KP
+JWT  --> KP
+JWT  --> SR
+TOTP --> SR
+
+' Password
+PAH --> A2
+PAH --> PP
+
+' OAuth2
+PKCE --> HE
+
+' Authz
+RBAC --> ROLE
+RBAC --> IRR
+RBAC --> IAR
+RBAC --> AUD
+
+' Audit impls
+PSR ..|> AUD
+NULL ..|> AUD
+
+' Middleware
+CM  --> CSRF
+CM  --> AUD
+SUM --> URL
+SUM --> AUD
+
+' All modules can emit audit events
+JWT  --> AUD
+RBAC --> AUD
+
+@enduml
