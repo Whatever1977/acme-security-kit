@@ -17,13 +17,7 @@ Security fixes are backported to the latest patch release of the current stable 
 
 If you believe you have found a security vulnerability in `acme/security-kit`, please disclose it responsibly using one of the methods below.
 
-### Option A — GitHub Private Security Advisory (preferred)
-
-Use [GitHub's private vulnerability reporting](https://github.com/acme/security-kit/security/advisories/new) to submit a report confidentially. This keeps the disclosure private until a fix is released.
-
-### Option B — Email
-
-Send a PGP-encrypted email to **security-kit@acme.example**. Include the following in your report:
+Send a email to **pkotsorgios654@gmail.com**. Include the following in your report:
 
 - A description of the vulnerability and the affected component
 - The version(s) affected
