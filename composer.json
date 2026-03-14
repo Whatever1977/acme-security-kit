@@ -1,0 +1,41 @@
+{
+    "name": "acme/security-kit",
+    "description": "A modular PHP security toolkit with PSR compatibility, strong typing, and enterprise-grade defaults.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["security", "csrf", "jwt", "totp", "oauth2", "password", "rbac", "audit", "psr"],
+    "require": {
+        "php": "^8.2",
+        "psr/log": "^3.0",
+        "psr/http-message": "^2.0",
+        "psr/http-server-middleware": "^1.0",
+        "psr/simple-cache": "^3.0",
+        "firebase/php-jwt": "^6.10",
+        "paragonie/constant_time_encoding": "^2.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0",
+        "phpstan/phpstan": "^1.10",
+        "phpstan/phpstan-strict-rules": "^1.5",
+        "friendsofphp/php-cs-fixer": "^3.40",
+        "rector/rector": "^1.0",
+        "infection/infection": "^0.29",
+        "phpbench/phpbench": "^1.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Acme\\SecurityKit\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Acme\\SecurityKit\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "infection/extension-installer": true
+        }
+    }
+}

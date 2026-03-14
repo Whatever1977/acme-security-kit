@@ -1,0 +1,17 @@
+{
+    "$schema": "https://infection.github.io/schema/1.6.json",
+    "source": {
+        "directories": ["src"]
+    },
+    "mutators": {
+        "@default": true
+    },
+    "minMsi": 80,
+    "minCoveredMsi": 90,
+    "testFramework": "phpunit",
+    "testFrameworkOptions": "--testsuite unit",
+    "logs": {
+        "text": "build/infection.txt",
+        "html": "build/infection.html"
+    }
+}
