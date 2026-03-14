@@ -16,7 +16,7 @@ Thank you for your interest in improving **acme/security-kit**! This document ex
 ## Development Setup
 
 ```bash
-git clone https://github.com/acme/security-kit.git
+git clone https://github.com/PanagiotisKotsorgios/acme-security-kit.git
 cd security-kit
 composer install
 ```
@@ -97,7 +97,7 @@ Changes to cryptographic code, token validation logic, or any module listed in `
 
 ## Reporting Bugs
 
-Open a [GitHub Issue](https://github.com/acme/security-kit/issues/new/choose) using the **Bug Report** template. Include:
+Open a new issue.
 
 - PHP version and OS
 - The minimal code that reproduces the problem
