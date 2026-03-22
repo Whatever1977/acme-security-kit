@@ -3,7 +3,7 @@
 # acme/security-kit
 
 
-<img src = "https://github.com/PanagiotisKotsorgios/acme-php/blob/main/assets/logo-01.png">.
+<img src = "https://github.com/PanagiotisKotsorgios/acme-php/blob/main/assets/logo-01.png">
 
 > A modular PHP security toolkit with PSR compatibility, strong typing, immutable value objects, and enterprise-grade defaults.
 
